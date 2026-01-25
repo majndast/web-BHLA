@@ -264,19 +264,45 @@ export default function LastMatchSection() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-white/5 rounded-lg p-4">
                           <div className="text-xs text-white/50 mb-3">{lastMatch.homeTeam.name}</div>
+                          {/* Header */}
+                          <div className="flex items-center justify-between py-2 border-b border-white/20 text-xs text-white/50">
+                            <span>Hráč</span>
+                            <div className="flex items-center gap-4">
+                              <span className="w-8 text-center">Góly</span>
+                              <span className="w-8 text-center">Asist.</span>
+                              <span className="w-8 text-center">Body</span>
+                            </div>
+                          </div>
                           {matchDetails.topScorers.home.map((player) => (
                             <div key={player.name} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
-                              <span>{player.name}</span>
-                              <span className="font-mono text-accent">{player.goals}+{player.assists}={player.points}</span>
+                              <span className="font-medium">{player.name}</span>
+                              <div className="flex items-center gap-4">
+                                <span className="w-8 text-center font-bold text-accent">{player.goals}</span>
+                                <span className="w-8 text-center">{player.assists}</span>
+                                <span className="w-8 text-center font-bold bg-white/10 rounded px-2 py-0.5">{player.points}</span>
+                              </div>
                             </div>
                           ))}
                         </div>
                         <div className="bg-white/5 rounded-lg p-4">
                           <div className="text-xs text-white/50 mb-3">{lastMatch.awayTeam.name}</div>
+                          {/* Header */}
+                          <div className="flex items-center justify-between py-2 border-b border-white/20 text-xs text-white/50">
+                            <span>Hráč</span>
+                            <div className="flex items-center gap-4">
+                              <span className="w-8 text-center">Góly</span>
+                              <span className="w-8 text-center">Asist.</span>
+                              <span className="w-8 text-center">Body</span>
+                            </div>
+                          </div>
                           {matchDetails.topScorers.away.map((player) => (
                             <div key={player.name} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
-                              <span>{player.name}</span>
-                              <span className="font-mono text-accent">{player.goals}+{player.assists}={player.points}</span>
+                              <span className="font-medium">{player.name}</span>
+                              <div className="flex items-center gap-4">
+                                <span className="w-8 text-center font-bold text-accent">{player.goals}</span>
+                                <span className="w-8 text-center">{player.assists}</span>
+                                <span className="w-8 text-center font-bold bg-white/10 rounded px-2 py-0.5">{player.points}</span>
+                              </div>
                             </div>
                           ))}
                         </div>
