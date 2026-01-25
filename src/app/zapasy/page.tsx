@@ -1,71 +1,10 @@
 "use client";
 
 import { useState } from "react";
-
-// Demo data
-const matches = [
-  {
-    id: "1",
-    homeTeam: { name: "HC Blatná", shortName: "BLA", color: "#D61F2C" },
-    awayTeam: { name: "SK Lední Medvědi", shortName: "LME", color: "#144A86" },
-    homeScore: 4,
-    awayScore: 2,
-    date: "2025-01-10",
-    time: "18:00",
-    venue: "Zimní stadion Blatná",
-    status: "finished" as const,
-  },
-  {
-    id: "2",
-    homeTeam: { name: "TJ Hokej Strakonice", shortName: "STR", color: "#0B1F3B" },
-    awayTeam: { name: "HC Vlci Písek", shortName: "VLP", color: "#2E7D32" },
-    homeScore: 3,
-    awayScore: 3,
-    date: "2025-01-12",
-    time: "19:00",
-    venue: "Zimní stadion Strakonice",
-    status: "finished" as const,
-  },
-  {
-    id: "3",
-    homeTeam: { name: "HC Blatná", shortName: "BLA", color: "#D61F2C" },
-    awayTeam: { name: "SK Lední Medvědi", shortName: "LME", color: "#144A86" },
-    date: "2025-02-15",
-    time: "18:00",
-    venue: "Zimní stadion Blatná",
-    status: "scheduled" as const,
-  },
-  {
-    id: "4",
-    homeTeam: { name: "TJ Hokej Strakonice", shortName: "STR", color: "#0B1F3B" },
-    awayTeam: { name: "HC Blatná", shortName: "BLA", color: "#D61F2C" },
-    date: "2025-02-18",
-    time: "19:30",
-    venue: "Zimní stadion Strakonice",
-    status: "scheduled" as const,
-  },
-  {
-    id: "5",
-    homeTeam: { name: "SK Lední Medvědi", shortName: "LME", color: "#144A86" },
-    awayTeam: { name: "HC Vlci Písek", shortName: "VLP", color: "#2E7D32" },
-    date: "2025-02-20",
-    time: "18:30",
-    venue: "Zimní stadion Blatná",
-    status: "scheduled" as const,
-  },
-];
+import Link from "next/link";
+import { matches, venues, formatFullDate, generateCalendarUrl } from "@/data";
 
 type FilterType = "all" | "scheduled" | "finished";
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("cs-CZ", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 export default function MatchesPage() {
   const [filter, setFilter] = useState<FilterType>("all");
@@ -75,8 +14,13 @@ export default function MatchesPage() {
     return match.status === filter;
   });
 
-  const scheduledMatches = filteredMatches.filter((m) => m.status === "scheduled");
-  const finishedMatches = filteredMatches.filter((m) => m.status === "finished");
+  const scheduledMatches = filteredMatches
+    .filter((m) => m.status === "scheduled")
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const finishedMatches = filteredMatches
+    .filter((m) => m.status === "finished")
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="py-12">
@@ -115,46 +59,60 @@ export default function MatchesPage() {
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-primary mb-6">Nadcházející zápasy</h2>
             <div className="space-y-4">
-              {scheduledMatches.map((match) => (
-                <div
-                  key={match.id}
-                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {/* Teams */}
-                    <div className="flex items-center justify-center gap-6 flex-1">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: match.homeTeam.color }}
-                        >
-                          {match.homeTeam.shortName}
-                        </div>
-                        <span className="font-semibold text-primary">{match.homeTeam.name}</span>
+              {scheduledMatches.map((match) => {
+                const venue = venues[match.venue];
+                return (
+                  <div
+                    key={match.id}
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      {/* Teams */}
+                      <div className="flex items-center justify-center gap-6 flex-1">
+                        <Link href={`/tymy/${match.homeTeam.id}`} className="flex items-center gap-3 hover:opacity-80">
+                          <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                            style={{ backgroundColor: match.homeTeam.color }}
+                          >
+                            {match.homeTeam.shortName}
+                          </div>
+                          <span className="font-semibold text-primary">{match.homeTeam.name}</span>
+                        </Link>
+
+                        <div className="text-2xl font-bold text-secondary">vs</div>
+
+                        <Link href={`/tymy/${match.awayTeam.id}`} className="flex items-center gap-3 hover:opacity-80">
+                          <span className="font-semibold text-primary">{match.awayTeam.name}</span>
+                          <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                            style={{ backgroundColor: match.awayTeam.color }}
+                          >
+                            {match.awayTeam.shortName}
+                          </div>
+                        </Link>
                       </div>
 
-                      <div className="text-2xl font-bold text-secondary">vs</div>
-
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-primary">{match.awayTeam.name}</span>
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: match.awayTeam.color }}
+                      {/* Date & Venue */}
+                      <div className="text-center md:text-right">
+                        <div className="font-semibold text-primary">{formatFullDate(match.date)}</div>
+                        <div className="text-accent font-bold text-lg">{match.time}</div>
+                        <div className="text-sm text-secondary">{venue.name}</div>
+                        <a
+                          href={generateCalendarUrl(match)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-accent hover:text-accent-hover text-sm font-medium mt-2"
                         >
-                          {match.awayTeam.shortName}
-                        </div>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Přidat do kalendáře
+                        </a>
                       </div>
-                    </div>
-
-                    {/* Date & Venue */}
-                    <div className="text-center md:text-right">
-                      <div className="font-semibold text-primary">{formatDate(match.date)}</div>
-                      <div className="text-accent font-bold text-lg">{match.time}</div>
-                      <div className="text-sm text-secondary">{match.venue}</div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -164,57 +122,65 @@ export default function MatchesPage() {
           <div>
             <h2 className="text-2xl font-bold text-primary mb-6">Odehrané zápasy</h2>
             <div className="space-y-4">
-              {finishedMatches.map((match) => (
-                <div
-                  key={match.id}
-                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {/* Teams & Score */}
-                    <div className="flex items-center justify-center gap-4 flex-1">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: match.homeTeam.color }}
-                        >
-                          {match.homeTeam.shortName}
+              {finishedMatches.map((match) => {
+                const venue = venues[match.venue];
+                return (
+                  <div
+                    key={match.id}
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      {/* Teams & Score */}
+                      <div className="flex items-center justify-center gap-4 flex-1">
+                        <Link href={`/tymy/${match.homeTeam.id}`} className="flex items-center gap-3 hover:opacity-80">
+                          <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                            style={{ backgroundColor: match.homeTeam.color }}
+                          >
+                            {match.homeTeam.shortName}
+                          </div>
+                          <span className="font-semibold text-primary">{match.homeTeam.name}</span>
+                        </Link>
+
+                        <div className="flex items-center gap-2">
+                          <span className={`text-3xl font-bold ${
+                            match.homeScore! > match.awayScore! ? "text-green-600" : "text-primary"
+                          }`}>
+                            {match.homeScore}
+                          </span>
+                          <span className="text-2xl text-secondary">:</span>
+                          <span className={`text-3xl font-bold ${
+                            match.awayScore! > match.homeScore! ? "text-green-600" : "text-primary"
+                          }`}>
+                            {match.awayScore}
+                          </span>
                         </div>
-                        <span className="font-semibold text-primary">{match.homeTeam.name}</span>
+
+                        <Link href={`/tymy/${match.awayTeam.id}`} className="flex items-center gap-3 hover:opacity-80">
+                          <span className="font-semibold text-primary">{match.awayTeam.name}</span>
+                          <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                            style={{ backgroundColor: match.awayTeam.color }}
+                          >
+                            {match.awayTeam.shortName}
+                          </div>
+                        </Link>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className={`text-3xl font-bold ${
-                          match.homeScore! > match.awayScore! ? "text-green-600" : "text-primary"
-                        }`}>
-                          {match.homeScore}
-                        </span>
-                        <span className="text-2xl text-secondary">:</span>
-                        <span className={`text-3xl font-bold ${
-                          match.awayScore! > match.homeScore! ? "text-green-600" : "text-primary"
-                        }`}>
-                          {match.awayScore}
-                        </span>
+                      {/* Date & Venue */}
+                      <div className="text-center md:text-right">
+                        <div className="text-sm text-secondary">{formatFullDate(match.date)}</div>
+                        <div className="text-sm text-secondary">{venue.name}</div>
+                        {match.periods && (
+                          <div className="text-xs text-secondary mt-1">
+                            ({match.periods.map(p => `${p.homeScore}:${p.awayScore}`).join(", ")})
+                          </div>
+                        )}
                       </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-primary">{match.awayTeam.name}</span>
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: match.awayTeam.color }}
-                        >
-                          {match.awayTeam.shortName}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Date & Venue */}
-                    <div className="text-center md:text-right">
-                      <div className="text-sm text-secondary">{formatDate(match.date)}</div>
-                      <div className="text-sm text-secondary">{match.venue}</div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

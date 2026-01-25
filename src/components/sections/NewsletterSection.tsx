@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const teams = [
-  { id: "1", name: "HC Dolní Bukovsko", shortName: "BUK", color: "#D61F2C" },
-  { id: "2", name: "HC Fantom", shortName: "FAN", color: "#144A86" },
-  { id: "3", name: "HC Roudné", shortName: "ROU", color: "#2E7D32" },
-  { id: "4", name: "HC Kostelec", shortName: "KOS", color: "#FF9800" },
-  { id: "5", name: "HC Hlavatce", shortName: "HLA", color: "#9C27B0" },
-  { id: "6", name: "HC Křída", shortName: "KRI", color: "#0B1F3B" },
-];
+import { teams } from "@/data";
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState("");

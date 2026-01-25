@@ -1,17 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-// Demo data
-const events = [
-  { id: "1", title: "HC Blatná vs SK Lední Medvědi", date: "2025-02-15", time: "18:00", type: "match" as const, location: "Zimní stadion Blatná" },
-  { id: "2", title: "TJ Hokej Strakonice vs HC Blatná", date: "2025-02-18", time: "19:30", type: "match" as const, location: "Zimní stadion Strakonice" },
-  { id: "3", title: "SK Lední Medvědi vs HC Vlci Písek", date: "2025-02-20", time: "18:30", type: "match" as const, location: "Zimní stadion Blatná" },
-  { id: "4", title: "Schůze vedení ligy", date: "2025-02-22", time: "17:00", type: "meeting" as const, location: "Radnice Blatná" },
-  { id: "5", title: "HC Vodňany vs TJ Sokol Protivín", date: "2025-02-25", time: "18:00", type: "match" as const, location: "Zimní stadion Vodňany" },
-  { id: "6", title: "Turnaj přípravek", date: "2025-03-01", time: "09:00", type: "other" as const, location: "Zimní stadion Blatná" },
-  { id: "7", title: "HC Blatná vs HC Vlci Písek", date: "2025-03-05", time: "18:00", type: "match" as const, location: "Zimní stadion Blatná" },
-];
+import Link from "next/link";
+import { getCalendarEvents, formatFullDate } from "@/data";
 
 const months = [
   "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
@@ -32,17 +23,9 @@ const eventTypeLabels = {
   other: "Ostatní",
 };
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("cs-CZ", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
-
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const events = getCalendarEvents();
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -52,7 +35,7 @@ export default function CalendarPage() {
   const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
   const daysInMonth = lastDay.getDate();
 
-  const days = [];
+  const days: (number | null)[] = [];
   for (let i = 0; i < startDay; i++) {
     days.push(null);
   }
@@ -77,7 +60,6 @@ export default function CalendarPage() {
   const today = new Date().toISOString().split("T")[0];
   const upcomingEvents = events
     .filter((e) => e.date >= today)
-    .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
 
   return (
@@ -196,9 +178,15 @@ export default function CalendarPage() {
                     <div className="flex items-start gap-3">
                       <div className={`w-3 h-3 rounded-full mt-1.5 ${eventTypeColors[event.type]}`} />
                       <div className="flex-1">
-                        <div className="font-medium text-primary">{event.title}</div>
+                        {event.matchId ? (
+                          <Link href="/zapasy" className="font-medium text-primary hover:text-accent">
+                            {event.title}
+                          </Link>
+                        ) : (
+                          <div className="font-medium text-primary">{event.title}</div>
+                        )}
                         <div className="text-sm text-secondary mt-1">
-                          {formatDate(event.date)} • {event.time}
+                          {formatFullDate(event.date)} • {event.time}
                         </div>
                         <div className="text-sm text-secondary flex items-center gap-1 mt-1">
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

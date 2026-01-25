@@ -30,8 +30,6 @@ export default function HeroSection() {
         </video>
         {/* Dark overlay with gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/70 to-primary/90" />
-        {/* Animated ice pattern overlay */}
-        <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEiIGN4PSIyMCIgY3k9IjIwIiByPSIxNSIvPjxsaW5lIHgxPSIwIiB5MT0iMjAiIHgyPSI0MCIgeTI9IjIwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMC41Ii8+PC9nPjwvc3ZnPg==')]" />
       </div>
 
       {/* Animated particles/ice effect */}
@@ -92,7 +90,7 @@ export default function HeroSection() {
             isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          &ldquo;Je to šílený, ale nemůžu bez toho být&rdquo;
+          &ldquo;Je to šílený, ale nemůžeme bez toho být&rdquo;
         </p>
 
         {/* Description */}

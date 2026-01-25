@@ -2,80 +2,48 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getLastMatch, venues } from "@/data";
 
-// Fiktivní data posledního zápasu
-const lastMatch = {
-  id: "last-1",
-  homeTeam: {
-    name: "HC Dolní Bukovsko",
-    shortName: "BUK",
-    color: "#D61F2C",
-  },
-  awayTeam: {
-    name: "HC Fantom",
-    shortName: "FAN",
-    color: "#144A86",
-  },
-  homeScore: 5,
-  awayScore: 4,
-  date: "2025-01-18",
-  venue: "ZS Soběslav",
+// Extended match data with detailed stats (will come from database later)
+const matchDetails = {
   hasOvertime: false,
   hasShootout: false,
-  periods: [
-    {
-      period: 1,
-      homeScore: 2,
-      awayScore: 1,
-      homeShots: 12,
-      awayShots: 9,
-    },
-    {
-      period: 2,
-      homeScore: 1,
-      awayScore: 2,
-      homeShots: 8,
-      awayShots: 14,
-    },
-    {
-      period: 3,
-      homeScore: 2,
-      awayScore: 1,
-      homeShots: 11,
-      awayShots: 8,
-    },
+  periodsWithShots: [
+    { period: 1, homeShots: 12, awayShots: 9 },
+    { period: 2, homeShots: 8, awayShots: 14 },
+    { period: 3, homeShots: 11, awayShots: 8 },
   ],
-  goals: [
-    { time: "05:23", period: 1, team: "home", scorer: "Pavel Houdek", assists: ["Jan Novák", "Petr Svoboda"], score: "1:0" },
-    { time: "09:45", period: 1, team: "away", scorer: "Martin Dvořák", assists: ["Tomáš Černý"], score: "1:1" },
-    { time: "14:30", period: 1, team: "home", scorer: "Jan Novák", assists: ["Pavel Houdek"], score: "2:1" },
-    { time: "22:10", period: 2, team: "away", scorer: "Jakub Král", assists: ["David Procházka", "Martin Dvořák"], score: "2:2" },
-    { time: "28:55", period: 2, team: "home", scorer: "Lukáš Veselý", assists: [], score: "3:2" },
-    { time: "35:40", period: 2, team: "away", scorer: "Tomáš Černý", assists: ["Jakub Král"], score: "3:3" },
-    { time: "42:20", period: 3, team: "home", scorer: "Pavel Houdek", assists: ["Lukáš Veselý", "Jan Novák"], score: "4:3" },
-    { time: "51:15", period: 3, team: "away", scorer: "Filip Novotný", assists: ["Martin Dvořák"], score: "4:4" },
-    { time: "57:30", period: 3, team: "home", scorer: "Jan Novák", assists: ["Pavel Houdek"], score: "5:4" },
+  extendedGoals: [
+    { time: "05:23", period: 1, team: "home" as const, scorer: "Jan Novák", assists: ["Petr Svoboda"], score: "1:0" },
+    { time: "12:45", period: 1, team: "away" as const, scorer: "Martin Dvořák", assists: ["Tomáš Horák", "Jakub Marek"], score: "1:1" },
+    { time: "18:30", period: 1, team: "home" as const, scorer: "Lukáš Procházka", assists: [], score: "2:1" },
+    { time: "03:12", period: 2, team: "away" as const, scorer: "David Černý", assists: ["Martin Dvořák"], score: "2:2" },
+    { time: "11:55", period: 2, team: "home" as const, scorer: "Jan Novák", assists: ["Karel Veselý"], score: "3:2" },
+    { time: "19:02", period: 2, team: "away" as const, scorer: "Filip Král", assists: [], score: "3:3" },
+    { time: "08:44", period: 3, team: "home" as const, scorer: "Petr Svoboda", assists: ["Jan Novák", "Lukáš Procházka"], score: "4:3" },
+    { time: "17:33", period: 3, team: "home" as const, scorer: "Karel Veselý", assists: ["Petr Svoboda"], score: "5:3" },
   ],
-  penalties: [
-    { time: "08:15", period: 1, team: "home", player: "Petr Svoboda", minutes: 2, reason: "Podražení" },
-    { time: "19:40", period: 2, team: "away", player: "David Procházka", minutes: 2, reason: "Hákování" },
-    { time: "32:00", period: 2, team: "home", player: "Martin Horák", minutes: 2, reason: "Držení hole" },
-    { time: "48:10", period: 3, team: "away", player: "Jakub Král", minutes: 2, reason: "Vysoká hůl" },
+  extendedPenalties: [
+    { time: "07:15", period: 1, team: "away" as const, player: "Tomáš Horák", minutes: 2, reason: "Držení" },
+    { time: "14:22", period: 1, team: "home" as const, player: "Michal Pokorný", minutes: 2, reason: "Vysoká hůl" },
+    { time: "06:45", period: 2, team: "away" as const, player: "Jakub Marek", minutes: 2, reason: "Podražení" },
+    { time: "15:30", period: 2, team: "home" as const, player: "Jan Novák", minutes: 2, reason: "Sekání" },
+    { time: "04:18", period: 3, team: "away" as const, player: "David Černý", minutes: 2, reason: "Vražení na hrazení" },
   ],
   goalies: {
-    home: { name: "Jakub Krtek", saves: 28, shotsAgainst: 32, savePercentage: 87.5 },
-    away: { name: "Ondřej Malý", saves: 26, shotsAgainst: 31, savePercentage: 83.9 },
+    home: { name: "Michal Pokorný", saves: 25, shotsAgainst: 28, savePercentage: 89.3 },
+    away: { name: "Filip Král", saves: 27, shotsAgainst: 32, savePercentage: 84.4 },
   },
   topScorers: {
     home: [
-      { name: "Pavel Houdek", goals: 2, assists: 2, points: 4 },
       { name: "Jan Novák", goals: 2, assists: 1, points: 3 },
-      { name: "Lukáš Veselý", goals: 1, assists: 1, points: 2 },
+      { name: "Petr Svoboda", goals: 1, assists: 2, points: 3 },
+      { name: "Karel Veselý", goals: 1, assists: 1, points: 2 },
     ],
     away: [
       { name: "Martin Dvořák", goals: 1, assists: 2, points: 3 },
-      { name: "Jakub Král", goals: 1, assists: 1, points: 2 },
-      { name: "Tomáš Černý", goals: 1, assists: 1, points: 2 },
+      { name: "David Černý", goals: 1, assists: 0, points: 1 },
+      { name: "Filip Král", goals: 1, assists: 0, points: 1 },
     ],
   },
 };
@@ -86,8 +54,17 @@ export default function LastMatchSection() {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [expanded, setExpanded] = useState(false);
 
-  const totalHomeShots = lastMatch.periods.reduce((acc, p) => acc + p.homeShots, 0);
-  const totalAwayShots = lastMatch.periods.reduce((acc, p) => acc + p.awayShots, 0);
+  const lastMatch = getLastMatch();
+
+  if (!lastMatch) {
+    return null;
+  }
+
+  const venue = venues[lastMatch.venue];
+  const periods = lastMatch.periods || [];
+
+  const totalHomeShots = matchDetails.periodsWithShots.reduce((acc, p) => acc + p.homeShots, 0);
+  const totalAwayShots = matchDetails.periodsWithShots.reduce((acc, p) => acc + p.awayShots, 0);
 
   return (
     <section className="py-16 bg-gradient-to-br from-primary via-primary to-primary-light text-white">
@@ -118,7 +95,7 @@ export default function LastMatchSection() {
           <div className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               {/* Home Team */}
-              <div className="flex items-center gap-4 flex-1">
+              <Link href={`/tymy/${lastMatch.homeTeam.id}`} className="flex items-center gap-4 flex-1 hover:opacity-80 transition-opacity">
                 <div
                   className="w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl font-bold shadow-lg"
                   style={{ backgroundColor: lastMatch.homeTeam.color }}
@@ -129,28 +106,29 @@ export default function LastMatchSection() {
                   <div className="text-xl md:text-2xl font-bold">{lastMatch.homeTeam.name}</div>
                   <div className="text-white/60 text-sm">Domácí</div>
                 </div>
-              </div>
+              </Link>
 
               {/* Score */}
               <div className="text-center px-8">
                 <div className="text-5xl md:text-7xl font-black">
-                  <span className={lastMatch.homeScore > lastMatch.awayScore ? "text-accent" : ""}>
+                  <span className={(lastMatch.homeScore || 0) > (lastMatch.awayScore || 0) ? "text-accent" : ""}>
                     {lastMatch.homeScore}
                   </span>
                   <span className="text-white/50 mx-2">:</span>
-                  <span className={lastMatch.awayScore > lastMatch.homeScore ? "text-accent" : ""}>
+                  <span className={(lastMatch.awayScore || 0) > (lastMatch.homeScore || 0) ? "text-accent" : ""}>
                     {lastMatch.awayScore}
                   </span>
                 </div>
                 <div className="text-white/60 text-sm mt-2">
-                  {lastMatch.hasOvertime && "Po prodloužení"}
-                  {lastMatch.hasShootout && "Po nájezdech"}
-                  {!lastMatch.hasOvertime && !lastMatch.hasShootout && "Konečný výsledek"}
+                  {matchDetails.hasOvertime && "Po prodloužení"}
+                  {matchDetails.hasShootout && "Po nájezdech"}
+                  {!matchDetails.hasOvertime && !matchDetails.hasShootout && "Konečný výsledek"}
                 </div>
+                <div className="text-white/40 text-xs mt-1">{venue.name}</div>
               </div>
 
               {/* Away Team */}
-              <div className="flex items-center gap-4 flex-1 justify-end">
+              <Link href={`/tymy/${lastMatch.awayTeam.id}`} className="flex items-center gap-4 flex-1 justify-end hover:opacity-80 transition-opacity">
                 <div className="text-right">
                   <div className="text-xl md:text-2xl font-bold">{lastMatch.awayTeam.name}</div>
                   <div className="text-white/60 text-sm">Hosté</div>
@@ -161,12 +139,12 @@ export default function LastMatchSection() {
                 >
                   {lastMatch.awayTeam.shortName}
                 </div>
-              </div>
+              </Link>
             </div>
 
             {/* Period Scores */}
             <div className="flex justify-center gap-4 mt-6">
-              {lastMatch.periods.map((period) => (
+              {periods.map((period) => (
                 <div key={period.period} className="text-center bg-white/5 rounded-lg px-4 py-2">
                   <div className="text-xs text-white/50 mb-1">{period.period}. třetina</div>
                   <div className="font-bold">{period.homeScore}:{period.awayScore}</div>
@@ -223,7 +201,7 @@ export default function LastMatchSection() {
                           </div>
                           <span className="text-2xl font-bold w-12 text-right">{totalAwayShots}</span>
                         </div>
-                        {lastMatch.periods.map((period) => (
+                        {matchDetails.periodsWithShots.map((period) => (
                           <div key={period.period} className="flex items-center gap-4 text-sm">
                             <span className="w-12">{period.homeShots}</span>
                             <div className="flex-1 text-center text-white/50">{period.period}. třetina</div>
@@ -239,40 +217,40 @@ export default function LastMatchSection() {
                       <div className="space-y-4">
                         <div className="bg-white/5 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium">{lastMatch.goalies.home.name}</span>
+                            <span className="font-medium">{matchDetails.goalies.home.name}</span>
                             <span className="text-xs text-white/50">{lastMatch.homeTeam.shortName}</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2 text-center text-sm">
                             <div>
-                              <div className="text-xl font-bold text-accent">{lastMatch.goalies.home.saves}</div>
+                              <div className="text-xl font-bold text-accent">{matchDetails.goalies.home.saves}</div>
                               <div className="text-white/50 text-xs">Zákroků</div>
                             </div>
                             <div>
-                              <div className="text-xl font-bold">{lastMatch.goalies.home.shotsAgainst}</div>
+                              <div className="text-xl font-bold">{matchDetails.goalies.home.shotsAgainst}</div>
                               <div className="text-white/50 text-xs">Střel na</div>
                             </div>
                             <div>
-                              <div className="text-xl font-bold">{lastMatch.goalies.home.savePercentage}%</div>
+                              <div className="text-xl font-bold">{matchDetails.goalies.home.savePercentage}%</div>
                               <div className="text-white/50 text-xs">Úspěšnost</div>
                             </div>
                           </div>
                         </div>
                         <div className="bg-white/5 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium">{lastMatch.goalies.away.name}</span>
+                            <span className="font-medium">{matchDetails.goalies.away.name}</span>
                             <span className="text-xs text-white/50">{lastMatch.awayTeam.shortName}</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2 text-center text-sm">
                             <div>
-                              <div className="text-xl font-bold text-accent">{lastMatch.goalies.away.saves}</div>
+                              <div className="text-xl font-bold text-accent">{matchDetails.goalies.away.saves}</div>
                               <div className="text-white/50 text-xs">Zákroků</div>
                             </div>
                             <div>
-                              <div className="text-xl font-bold">{lastMatch.goalies.away.shotsAgainst}</div>
+                              <div className="text-xl font-bold">{matchDetails.goalies.away.shotsAgainst}</div>
                               <div className="text-white/50 text-xs">Střel na</div>
                             </div>
                             <div>
-                              <div className="text-xl font-bold">{lastMatch.goalies.away.savePercentage}%</div>
+                              <div className="text-xl font-bold">{matchDetails.goalies.away.savePercentage}%</div>
                               <div className="text-white/50 text-xs">Úspěšnost</div>
                             </div>
                           </div>
@@ -286,7 +264,7 @@ export default function LastMatchSection() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-white/5 rounded-lg p-4">
                           <div className="text-xs text-white/50 mb-3">{lastMatch.homeTeam.name}</div>
-                          {lastMatch.topScorers.home.map((player, idx) => (
+                          {matchDetails.topScorers.home.map((player) => (
                             <div key={player.name} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                               <span>{player.name}</span>
                               <span className="font-mono text-accent">{player.goals}+{player.assists}={player.points}</span>
@@ -295,7 +273,7 @@ export default function LastMatchSection() {
                         </div>
                         <div className="bg-white/5 rounded-lg p-4">
                           <div className="text-xs text-white/50 mb-3">{lastMatch.awayTeam.name}</div>
-                          {lastMatch.topScorers.away.map((player, idx) => (
+                          {matchDetails.topScorers.away.map((player) => (
                             <div key={player.name} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                               <span>{player.name}</span>
                               <span className="font-mono text-accent">{player.goals}+{player.assists}={player.points}</span>
@@ -310,7 +288,7 @@ export default function LastMatchSection() {
                 {activeTab === "goals" && (
                   <div className="space-y-6">
                     {[1, 2, 3].map((period) => {
-                      const periodGoals = lastMatch.goals.filter((g) => g.period === period);
+                      const periodGoals = matchDetails.extendedGoals.filter((g) => g.period === period);
                       return (
                         <div key={period}>
                           <h4 className="text-sm font-semibold text-white/70 mb-3">{period}. TŘETINA</h4>
@@ -348,7 +326,7 @@ export default function LastMatchSection() {
                 {activeTab === "penalties" && (
                   <div className="space-y-6">
                     {[1, 2, 3].map((period) => {
-                      const periodPenalties = lastMatch.penalties.filter((p) => p.period === period);
+                      const periodPenalties = matchDetails.extendedPenalties.filter((p) => p.period === period);
                       if (periodPenalties.length === 0) return null;
                       return (
                         <div key={period}>
@@ -390,14 +368,14 @@ export default function LastMatchSection() {
                         <thead>
                           <tr className="text-white/50">
                             <th className="text-left py-2">Statistika</th>
-                            {lastMatch.periods.map((p) => (
+                            {periods.map((p) => (
                               <th key={p.period} className="text-center py-2" colSpan={2}>{p.period}. třetina</th>
                             ))}
                             <th className="text-center py-2" colSpan={2}>Celkem</th>
                           </tr>
                           <tr className="text-white/30 text-xs">
                             <th></th>
-                            {lastMatch.periods.map((p) => (
+                            {periods.map((p) => (
                               <React.Fragment key={`header-${p.period}`}>
                                 <th className="text-center">{lastMatch.homeTeam.shortName}</th>
                                 <th className="text-center">{lastMatch.awayTeam.shortName}</th>
@@ -410,7 +388,7 @@ export default function LastMatchSection() {
                         <tbody>
                           <tr className="border-t border-white/10">
                             <td className="py-3">Góly</td>
-                            {lastMatch.periods.map((p) => (
+                            {periods.map((p) => (
                               <React.Fragment key={`goals-${p.period}`}>
                                 <td className="text-center font-bold">{p.homeScore}</td>
                                 <td className="text-center font-bold">{p.awayScore}</td>
@@ -421,7 +399,7 @@ export default function LastMatchSection() {
                           </tr>
                           <tr className="border-t border-white/10">
                             <td className="py-3">Střely</td>
-                            {lastMatch.periods.map((p) => (
+                            {matchDetails.periodsWithShots.map((p) => (
                               <React.Fragment key={`shots-${p.period}`}>
                                 <td className="text-center">{p.homeShots}</td>
                                 <td className="text-center">{p.awayShots}</td>

@@ -1,62 +1,5 @@
 import Link from "next/link";
-
-// Demo data - skutečné týmy BHLA
-const teams = [
-  {
-    id: "1",
-    name: "HC Dolní Bukovsko",
-    shortName: "BUK",
-    color: "#D61F2C",
-    founded: 2008,
-    description: "Jeden ze zakládajících týmů BHLA s dlouhou tradicí.",
-    stats: { played: 17, wins: 12, losses: 5, goalsFor: 58, goalsAgainst: 35, points: 36 },
-  },
-  {
-    id: "2",
-    name: "HC Fantom",
-    shortName: "FAN",
-    color: "#144A86",
-    founded: 2008,
-    description: "Tradční tým ligy známý svou houževnatostí.",
-    stats: { played: 17, wins: 11, losses: 6, goalsFor: 52, goalsAgainst: 38, points: 33 },
-  },
-  {
-    id: "3",
-    name: "HC Roudné",
-    shortName: "ROU",
-    color: "#2E7D32",
-    founded: 2010,
-    description: "Tým z Roudného s bojovným duchem.",
-    stats: { played: 17, wins: 10, losses: 7, goalsFor: 48, goalsAgainst: 42, points: 30 },
-  },
-  {
-    id: "4",
-    name: "HC Kostelec",
-    shortName: "KOS",
-    color: "#FF9800",
-    founded: 2009,
-    description: "Kostelecký tým s věrnou fanouškovskou základnou.",
-    stats: { played: 17, wins: 9, losses: 8, goalsFor: 45, goalsAgainst: 44, points: 27 },
-  },
-  {
-    id: "5",
-    name: "HC Hlavatce",
-    shortName: "HLA",
-    color: "#9C27B0",
-    founded: 2012,
-    description: "Hlavatecký tým s mladým kádrem.",
-    stats: { played: 17, wins: 7, losses: 10, goalsFor: 40, goalsAgainst: 48, points: 21 },
-  },
-  {
-    id: "6",
-    name: "HC Křída",
-    shortName: "KRI",
-    color: "#0B1F3B",
-    founded: 2015,
-    description: "Nováček ligy s ambicemi prosadit se.",
-    stats: { played: 17, wins: 5, losses: 12, goalsFor: 32, goalsAgainst: 55, points: 15 },
-  },
-];
+import { teams, standings } from "@/data";
 
 export default function TeamsPage() {
   return (
@@ -73,7 +16,7 @@ export default function TeamsPage() {
         {/* Standings Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-12">
           <div className="bg-primary text-white px-6 py-4">
-            <h2 className="text-xl font-semibold">Tabulka sezóny 2024/2025</h2>
+            <h2 className="text-xl font-semibold">Tabulka sezóny 2025/2026</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -90,11 +33,11 @@ export default function TeamsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {teams.map((team, index) => (
-                  <tr key={team.id} className={index < 3 ? "bg-green-50" : ""}>
+                {standings.map((team) => (
+                  <tr key={team.id} className={team.position <= 3 ? "bg-green-50" : ""}>
                     <td className="px-6 py-4">
-                      <span className={`font-bold ${index < 3 ? "text-green-600" : "text-secondary"}`}>
-                        {index + 1}
+                      <span className={`font-bold ${team.position <= 3 ? "text-green-600" : "text-secondary"}`}>
+                        {team.position}
                       </span>
                     </td>
                     <td className="px-6 py-4">

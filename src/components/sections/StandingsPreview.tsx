@@ -1,14 +1,5 @@
 import Link from "next/link";
-
-// Demo data - skutečné týmy BHLA
-const standings = [
-  { position: 1, team: "HC Dolní Bukovsko", shortName: "BUK", color: "#D61F2C", played: 17, wins: 12, points: 36 },
-  { position: 2, team: "HC Fantom", shortName: "FAN", color: "#144A86", played: 17, wins: 11, points: 33 },
-  { position: 3, team: "HC Roudné", shortName: "ROU", color: "#2E7D32", played: 17, wins: 10, points: 30 },
-  { position: 4, team: "HC Kostelec", shortName: "KOS", color: "#FF9800", played: 17, wins: 9, points: 27 },
-  { position: 5, team: "HC Hlavatce", shortName: "HLA", color: "#9C27B0", played: 17, wins: 7, points: 21 },
-  { position: 6, team: "HC Křída", shortName: "KRI", color: "#0B1F3B", played: 17, wins: 5, points: 15 },
-];
+import { standings } from "@/data";
 
 export default function StandingsPreview() {
   return (
@@ -30,8 +21,8 @@ export default function StandingsPreview() {
       <div className="divide-y divide-gray-100">
         {standings.map((team, index) => (
           <Link
-            key={team.shortName}
-            href={`/tymy/${index + 1}`}
+            key={team.id}
+            href={`/tymy/${team.id}`}
             className={`flex items-center px-4 py-3 hover:bg-gray-50 transition-colors ${
               index < 3 ? "bg-gradient-to-r from-green-50/50 to-transparent" : ""
             }`}
@@ -63,7 +54,7 @@ export default function StandingsPreview() {
               </div>
               <div className="min-w-0">
                 <div className="font-medium text-primary text-sm truncate">{team.shortName}</div>
-                <div className="text-xs text-secondary hidden sm:block">{team.wins}V</div>
+                <div className="text-xs text-secondary hidden sm:block">{team.stats.wins}V</div>
               </div>
             </div>
 
@@ -71,11 +62,11 @@ export default function StandingsPreview() {
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <div className="text-xs text-secondary">Z</div>
-                <div className="text-sm text-primary">{team.played}</div>
+                <div className="text-sm text-primary">{team.stats.played}</div>
               </div>
               <div className="text-center">
                 <div className="text-xs text-secondary">B</div>
-                <div className="text-lg font-bold text-accent">{team.points}</div>
+                <div className="text-lg font-bold text-accent">{team.stats.points}</div>
               </div>
             </div>
           </Link>
@@ -84,12 +75,12 @@ export default function StandingsPreview() {
 
       {/* Footer */}
       <div className="border-t border-gray-100 p-3 bg-gray-50">
-        <div className="flex items-center justify-between text-xs text-secondary">
+        <Link href="/tymy" className="flex items-center justify-between text-xs text-secondary hover:text-primary">
           <span>Kompletní statistiky</span>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-        </div>
+        </Link>
       </div>
     </div>
   );

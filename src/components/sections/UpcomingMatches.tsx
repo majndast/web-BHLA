@@ -2,92 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-// Venues with coordinates
-const venues = {
-  soběslav: {
-    name: "Zimní stadion Soběslav",
-    address: "Wilsonova 628, 392 01 Soběslav",
-    lat: 49.2591,
-    lng: 14.7206,
-    mapUrl: "https://maps.google.com/maps?q=49.2591,14.7206&z=15&output=embed",
-    directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=49.2591,14.7206",
-  },
-  veselí: {
-    name: "Zimní stadion Veselí nad Lužnicí",
-    address: "K Zastávce 800, 391 81 Veselí nad Lužnicí",
-    lat: 49.1836,
-    lng: 14.6975,
-    mapUrl: "https://maps.google.com/maps?q=49.1836,14.6975&z=15&output=embed",
-    directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=49.1836,14.6975",
-  },
-};
-
-// Demo data
-const upcomingMatches = [
-  {
-    id: "1",
-    homeTeam: { id: "1", name: "HC Dolní Bukovsko", shortName: "BUK", color: "#D61F2C" },
-    awayTeam: { id: "2", name: "HC Fantom", shortName: "FAN", color: "#144A86" },
-    date: "2025-02-15",
-    time: "18:00",
-    venue: "soběslav" as keyof typeof venues,
-  },
-  {
-    id: "2",
-    homeTeam: { id: "3", name: "HC Roudné", shortName: "ROU", color: "#2E7D32" },
-    awayTeam: { id: "1", name: "HC Dolní Bukovsko", shortName: "BUK", color: "#D61F2C" },
-    date: "2025-02-18",
-    time: "19:30",
-    venue: "veselí" as keyof typeof venues,
-  },
-  {
-    id: "3",
-    homeTeam: { id: "2", name: "HC Fantom", shortName: "FAN", color: "#144A86" },
-    awayTeam: { id: "4", name: "HC Kostelec", shortName: "KOS", color: "#FF9800" },
-    date: "2025-02-20",
-    time: "18:30",
-    venue: "soběslav" as keyof typeof venues,
-  },
-];
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("cs-CZ", {
-    weekday: "short",
-    day: "numeric",
-    month: "numeric",
-  });
-}
-
-function formatFullDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("cs-CZ", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function generateCalendarUrl(match: typeof upcomingMatches[0]): string {
-  const venue = venues[match.venue];
-  const startDate = new Date(`${match.date}T${match.time}:00`);
-  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
-
-  const formatForCalendar = (date: Date) => {
-    return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  };
-
-  const title = `${match.homeTeam.name} vs ${match.awayTeam.name} - BHLA`;
-  const details = `Hokejový zápas BHLA\n${match.homeTeam.name} vs ${match.awayTeam.name}`;
-  const location = `${venue.name}, ${venue.address}`;
-
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatForCalendar(startDate)}/${formatForCalendar(endDate)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
-}
+import { getUpcomingMatches, venues, formatDate, formatFullDate, generateCalendarUrl } from "@/data";
 
 export default function UpcomingMatches() {
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+  const upcomingMatches = getUpcomingMatches(3);
 
   return (
     <div className="space-y-4">
