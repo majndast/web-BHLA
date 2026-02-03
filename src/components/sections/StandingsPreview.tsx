@@ -1,7 +1,136 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { standings } from "@/data";
+import { createClient } from "@/lib/supabase/client";
+
+interface TeamStanding {
+  id: string;
+  name: string;
+  short_name: string;
+  color: string;
+  played: number;
+  wins: number;
+  losses: number;
+  points: number;
+}
 
 export default function StandingsPreview() {
+  const [standings, setStandings] = useState<TeamStanding[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchStandings();
+  }, []);
+
+  const fetchStandings = async () => {
+    try {
+      // Fetch teams
+      const { data: teams } = await supabase
+        .from("teams")
+        .select("id, name, short_name, color");
+
+      if (!teams || teams.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all finished matches
+      const { data: matches } = await supabase
+        .from("matches")
+        .select("home_team_id, away_team_id, home_score, away_score, has_overtime, has_shootout")
+        .eq("status", "finished");
+
+      // Calculate standings
+      const teamStats: Record<string, { wins: number; losses: number; otWins: number; otLosses: number; played: number }> = {};
+
+      teams.forEach((team) => {
+        teamStats[team.id] = { wins: 0, losses: 0, otWins: 0, otLosses: 0, played: 0 };
+      });
+
+      if (matches) {
+        matches.forEach((match) => {
+          const homeId = match.home_team_id;
+          const awayId = match.away_team_id;
+          const homeScore = match.home_score || 0;
+          const awayScore = match.away_score || 0;
+          const isOT = match.has_overtime || match.has_shootout;
+
+          if (teamStats[homeId]) teamStats[homeId].played++;
+          if (teamStats[awayId]) teamStats[awayId].played++;
+
+          if (homeScore > awayScore) {
+            // Home wins
+            if (isOT) {
+              if (teamStats[homeId]) teamStats[homeId].otWins++;
+              if (teamStats[awayId]) teamStats[awayId].otLosses++;
+            } else {
+              if (teamStats[homeId]) teamStats[homeId].wins++;
+              if (teamStats[awayId]) teamStats[awayId].losses++;
+            }
+          } else {
+            // Away wins
+            if (isOT) {
+              if (teamStats[awayId]) teamStats[awayId].otWins++;
+              if (teamStats[homeId]) teamStats[homeId].otLosses++;
+            } else {
+              if (teamStats[awayId]) teamStats[awayId].wins++;
+              if (teamStats[homeId]) teamStats[homeId].losses++;
+            }
+          }
+        });
+      }
+
+      // Calculate points and create standings
+      // 3 points for win, 2 for OT win, 1 for OT loss, 0 for loss
+      const standingsData: TeamStanding[] = teams.map((team) => {
+        const stats = teamStats[team.id];
+        const points = stats.wins * 3 + stats.otWins * 2 + stats.otLosses * 1;
+        return {
+          id: team.id,
+          name: team.name,
+          short_name: team.short_name,
+          color: team.color,
+          played: stats.played,
+          wins: stats.wins + stats.otWins,
+          losses: stats.losses + stats.otLosses,
+          points,
+        };
+      });
+
+      // Sort by points (desc), then by wins (desc)
+      standingsData.sort((a, b) => b.points - a.points || b.wins - a.wins);
+
+      setStandings(standingsData);
+    } catch (error) {
+      console.error("Error fetching standings:", error);
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm p-8">
+        <div className="flex justify-center">
+          <svg className="animate-spin w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
+  if (standings.length === 0) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm p-8 text-center">
+        <p className="text-secondary">Zatím žádné týmy</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       {/* Header */}
@@ -13,7 +142,6 @@ export default function StandingsPreview() {
             </svg>
             <span className="font-semibold">Tabulka ligy</span>
           </div>
-          <span className="text-xs text-white/70">17. kolo</span>
         </div>
       </div>
 
@@ -40,7 +168,7 @@ export default function StandingsPreview() {
                     : "bg-gray-100 text-gray-500"
                 }`}
               >
-                {team.position}
+                {index + 1}
               </span>
             </div>
 
@@ -50,11 +178,11 @@ export default function StandingsPreview() {
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm"
                 style={{ backgroundColor: team.color }}
               >
-                {team.shortName.slice(0, 2)}
+                {team.short_name.slice(0, 2)}
               </div>
               <div className="min-w-0">
-                <div className="font-medium text-primary text-sm truncate">{team.shortName}</div>
-                <div className="text-xs text-secondary hidden sm:block">{team.stats.wins}V</div>
+                <div className="font-medium text-primary text-sm truncate">{team.short_name}</div>
+                <div className="text-xs text-secondary hidden sm:block">{team.wins}V</div>
               </div>
             </div>
 
@@ -62,11 +190,11 @@ export default function StandingsPreview() {
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <div className="text-xs text-secondary">Z</div>
-                <div className="text-sm text-primary">{team.stats.played}</div>
+                <div className="text-sm text-primary">{team.played}</div>
               </div>
               <div className="text-center">
                 <div className="text-xs text-secondary">B</div>
-                <div className="text-lg font-bold text-accent">{team.stats.points}</div>
+                <div className="text-lg font-bold text-accent">{team.points}</div>
               </div>
             </div>
           </Link>
