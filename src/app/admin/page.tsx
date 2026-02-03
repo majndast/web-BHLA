@@ -1,4 +1,8 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 const quickActions = [
   {
@@ -45,7 +49,93 @@ const quickActions = [
   },
 ];
 
+interface Stats {
+  playedMatches: number;
+  scheduledMatches: number;
+  teams: number;
+  players: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: "match" | "team" | "player";
+  description: string;
+  date: string;
+}
+
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<Stats>({
+    playedMatches: 0,
+    scheduledMatches: 0,
+    teams: 0,
+    players: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch all stats in parallel
+      const [
+        { count: playedMatches },
+        { count: scheduledMatches },
+        { count: teams },
+        { count: players },
+        { data: recentMatches },
+      ] = await Promise.all([
+        supabase.from("matches").select("*", { count: "exact", head: true }).eq("status", "finished"),
+        supabase.from("matches").select("*", { count: "exact", head: true }).eq("status", "scheduled"),
+        supabase.from("teams").select("*", { count: "exact", head: true }),
+        supabase.from("players").select("*", { count: "exact", head: true }),
+        supabase
+          .from("matches")
+          .select(`
+            id,
+            date,
+            status,
+            home_team:teams!matches_home_team_id_fkey(name, short_name),
+            away_team:teams!matches_away_team_id_fkey(name, short_name)
+          `)
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
+
+      setStats({
+        playedMatches: playedMatches || 0,
+        scheduledMatches: scheduledMatches || 0,
+        teams: teams || 0,
+        players: players || 0,
+      });
+
+      // Format recent activity
+      if (recentMatches) {
+        const activity: RecentActivity[] = recentMatches.map((match: any) => ({
+          id: match.id,
+          type: "match" as const,
+          description: `${match.status === "finished" ? "Odehrán" : "Naplánován"} zápas ${match.home_team?.short_name || "?"} vs ${match.away_team?.short_name || "?"}`,
+          date: match.date,
+        }));
+        setRecentActivity(activity);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+    setLoading(false);
+  };
+
+  const statItems = [
+    { label: "Odehraných zápasů", value: stats.playedMatches, icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { label: "Naplánovaných", value: stats.scheduledMatches, icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+    { label: "Týmů", value: stats.teams, icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
+    { label: "Hráčů", value: stats.players, icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Welcome */}
@@ -76,16 +166,11 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats overview - placeholder */}
+      {/* Stats overview */}
       <div>
         <h2 className="text-lg font-semibold text-primary mb-4">Přehled sezóny</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: "Odehraných zápasů", value: "0", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
-            { label: "Naplánovaných", value: "0", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-            { label: "Týmů", value: "0", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
-            { label: "Hráčů", value: "0", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
-          ].map((stat) => (
+          {statItems.map((stat) => (
             <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -94,7 +179,13 @@ export default function AdminDashboard() {
                   </svg>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-primary">{stat.value}</div>
+                  <div className="text-2xl font-bold text-primary">
+                    {loading ? (
+                      <div className="w-8 h-6 bg-gray-200 animate-pulse rounded" />
+                    ) : (
+                      stat.value
+                    )}
+                  </div>
                   <div className="text-xs text-secondary">{stat.label}</div>
                 </div>
               </div>
@@ -103,17 +194,40 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Recent activity - placeholder */}
+      {/* Recent activity */}
       <div>
         <h2 className="text-lg font-semibold text-primary mb-4">Poslední aktivita</h2>
         <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-          <div className="p-6 text-center text-secondary">
-            <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm">Zatím žádná aktivita</p>
-            <p className="text-xs text-gray-400 mt-1">Po přidání prvních dat se zde zobrazí historie změn</p>
-          </div>
+          {loading ? (
+            <div className="p-6 text-center">
+              <svg className="animate-spin w-8 h-8 mx-auto text-primary" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          ) : recentActivity.length === 0 ? (
+            <div className="p-6 text-center text-secondary">
+              <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm">Zatím žádná aktivita</p>
+              <p className="text-xs text-gray-400 mt-1">Po přidání prvních dat se zde zobrazí historie změn</p>
+            </div>
+          ) : (
+            recentActivity.map((activity) => (
+              <div key={activity.id} className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-primary">{activity.description}</div>
+                  <div className="text-xs text-secondary">{new Date(activity.date).toLocaleDateString("cs-CZ")}</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
