@@ -73,14 +73,31 @@ export default function TeamsAdminPage() {
       description: description || null,
     };
 
-    if (editingTeam) {
-      await supabase.from("teams").update(teamData).eq("id", editingTeam.id);
-    } else {
-      await supabase.from("teams").insert(teamData);
-    }
+    try {
+      if (editingTeam) {
+        const { error } = await supabase.from("teams").update(teamData).eq("id", editingTeam.id);
+        if (error) {
+          console.error("Update error:", error);
+          alert(`Chyba při ukládání: ${error.message}`);
+          setSaving(false);
+          return;
+        }
+      } else {
+        const { error } = await supabase.from("teams").insert(teamData);
+        if (error) {
+          console.error("Insert error:", error);
+          alert(`Chyba při vytváření: ${error.message}`);
+          setSaving(false);
+          return;
+        }
+      }
 
-    await fetchTeams();
-    resetForm();
+      await fetchTeams();
+      resetForm();
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Neočekávaná chyba");
+    }
     setSaving(false);
   };
 
